@@ -1,0 +1,28 @@
+[package]
+name = "web3mq_bridge_contract"
+version = "0.0.1"
+
+# See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
+
+[dependencies]
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.8.0" }
+snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.6.0" }
+starknet = "2.3.1"
+
+[[target.starknet-contract]]
+# Enable Sierra codegen.
+sierra = true
+allowed-libfuncs-list.name = "experimental"
+
+# Enable CASM codegen.
+casm = true
+
+[tool.sncast]
+account = "test_user"
+url = "https://starknet-goerli.g.alchemy.com/v2/xH1ISEJgS906iZsj-7x6kyUjziXr6hTY"
+
+# account = "test_user"
+# url = "https://starknet-sepolia.public.blastapi.io/rpc/v0_6"
+
+# account = "Binx"
+# url = "https://starknet-mainnet.g.alchemy.com/v2/rcIf3nJJWbd-9_Gz-JZ1UJjg3lcDOdnr"
