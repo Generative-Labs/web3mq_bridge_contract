@@ -1,1 +1,1 @@
-{"version":1,"contracts":[{"id":"1c8pvnbiogchc","package_name":"web3mq_bridge_contract","contract_name":"Web3mqBridge","artifacts":{"sierra":"web3mq_bridge_contract_Web3mqBridge.contract_class.json","casm":"web3mq_bridge_contract_Web3mqBridge.compiled_contract_class.json"}}]}
+{"version":1,"contracts":[{"id":"1c8pvnbiogchc","package_name":"web3mq_bridge_contract","contract_name":"Web3mqBridge","artifacts":{"sierra":"web3mq_bridge_contract_Web3mqBridge.sierra.json","casm":"web3mq_bridge_contract_Web3mqBridge.casm.json"}}]}

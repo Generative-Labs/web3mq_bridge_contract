@@ -1,4 +1,5 @@
 use starknet::ContractAddress;
+use starknet::ClassHash;
 
 #[starknet::interface]
 trait IBridge<TContractState> {
@@ -8,6 +9,7 @@ trait IBridge<TContractState> {
     fn chain_tokens_support(self: @TContractState, target_chain_id: felt252, token_address: ContractAddress) -> bool;
     fn set_recipient_address(ref self: TContractState, recipient_address: ContractAddress);
     fn get_recipient_address(self: @TContractState) -> ContractAddress;
+    fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
 }
 
 #[starknet::interface]
@@ -27,18 +29,12 @@ trait IERC20<TContractState> {
 
 #[starknet::contract]
 mod Web3mqBridge {
-    // use snforge_std::PrintTrait;
-    use openzeppelin::access::ownable::interface::IOwnable;
     use core::traits::TryInto;
     use core::option::OptionTrait;
     use core::array::SpanTrait;
     use core::array::ArrayTrait;
     use core::traits::Into;
     use core::box::BoxTrait;
-    use core::starknet::event::EventEmitter;
-    use openzeppelin::access::ownable::OwnableComponent;
-    use openzeppelin::upgrades::UpgradeableComponent;
-    use openzeppelin::upgrades::interface::IUpgradeable;
     use starknet::ClassHash;
     use starknet::ContractAddress;
     use starknet::get_block_info;
@@ -46,23 +42,9 @@ mod Web3mqBridge {
     use starknet::{get_caller_address, get_tx_info};
     use web3mq_bridge_contract::bridge::{IERC20Dispatcher, IERC20DispatcherTrait};
 
-    component!(path: OwnableComponent, storage: ownable, event: OwnableEvent);
-    component!(path: UpgradeableComponent, storage: upgradeable, event: UpgradeableEvent);
-
-    /// Ownable
-    #[abi(embed_v0)]
-    impl OwnableImpl = OwnableComponent::OwnableImpl<ContractState>;
-    impl OwnableInternalImpl = OwnableComponent::InternalImpl<ContractState>;
-
-    /// Upgradeable
-    impl UpgradeableInternalImpl = UpgradeableComponent::InternalImpl<ContractState>;
-
     #[storage]
     struct Storage {
-        #[substorage(v0)]
-        ownable: OwnableComponent::Storage,
-        #[substorage(v0)]
-        upgradeable: UpgradeableComponent::Storage,
+        owner: ContractAddress,
         support_chain_tokens: LegacyMap::<(felt252, ContractAddress), bool>,
 		recipient_address: ContractAddress
     }
@@ -70,10 +52,6 @@ mod Web3mqBridge {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        #[flat]
-        OwnableEvent: OwnableComponent::Event,
-        #[flat]
-        UpgradeableEvent: UpgradeableComponent::Event,
         DepositeEvent: DepositeEvent
     }
 
@@ -90,18 +68,8 @@ mod Web3mqBridge {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: ContractAddress, recipient_address: ContractAddress) {
-        self.ownable.initializer(owner);
+        self.owner.write(owner);
         self.recipient_address.write(recipient_address);
-    }
-
-    #[external(v0)]
-    impl UpgradeableImpl of IUpgradeable<ContractState> {
-        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
-            // This function can only be called by the owner
-            self.ownable.assert_only_owner();
-            // Replace the class hash upgrading the contract
-            self.upgradeable._upgrade(new_class_hash);
-        }
     }
 
     #[external(v0)]
@@ -123,12 +91,12 @@ mod Web3mqBridge {
         }
 
 		fn append_support_chain_tokens(ref self: ContractState, target_chain_id: felt252, token_address: ContractAddress){
-            self.ownable.assert_only_owner();
+            assert(self.owner.read() == get_caller_address(), 'not owner');
             self.support_chain_tokens.write((target_chain_id, token_address), true);
         }
 
 		fn remove_support_chain_tokens(ref self: ContractState, target_chain_id: felt252, token_address: ContractAddress){
-            self.ownable.assert_only_owner();
+            assert(self.owner.read() == get_caller_address(), 'not owner');
             self.support_chain_tokens.write((target_chain_id, token_address), false);
         }
 
@@ -137,12 +105,16 @@ mod Web3mqBridge {
         }
 
 		fn set_recipient_address(ref self: ContractState, recipient_address: ContractAddress){
-            self.ownable.assert_only_owner();
+            assert(self.owner.read() == get_caller_address(), 'not owner');
             self.recipient_address.write(recipient_address);
         }
 
         fn get_recipient_address(self: @ContractState) -> ContractAddress{
             return self.recipient_address.read();
+        }
+
+        fn upgrade(ref self: ContractState, new_class_hash: ClassHash) {
+            starknet::replace_class_syscall(new_class_hash);
         }
     }
 }
