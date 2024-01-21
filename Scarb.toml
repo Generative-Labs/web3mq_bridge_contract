@@ -19,4 +19,4 @@ casm = true
 
 [tool.sncast]
 account = "test_user"
-url = "https://starknet-goerli.g.alchemy.com/v2/xH1ISEJgS906iZsj-7x6kyUjziXr6hTY"
+url = ""
