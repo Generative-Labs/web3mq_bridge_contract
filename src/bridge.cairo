@@ -1,3 +1,4 @@
+use web3mq_bridge_contract::bridge::IBridge;
 use starknet::ContractAddress;
 use starknet::ClassHash;
 
@@ -10,6 +11,8 @@ trait IBridge<TContractState> {
     fn set_recipient_address(ref self: TContractState, recipient_address: ContractAddress);
     fn get_recipient_address(self: @TContractState) -> ContractAddress;
     fn upgrade(ref self: TContractState, new_class_hash: ClassHash);
+    fn set_owner(ref self: TContractState, owner: ContractAddress);
+    fn owner(self: @TContractState) -> ContractAddress;
 }
 
 #[starknet::interface]
@@ -88,6 +91,14 @@ mod Web3mqBridge {
                 target_address: target_address,
                 amount: amount
             });
+        }
+
+        fn set_owner(ref self: ContractState, owner: ContractAddress){
+            assert(self.owner.read() == get_caller_address(), 'not owner');
+            self.owner.write(owner);
+        }
+        fn owner(self: @ContractState) -> ContractAddress{
+            return self.owner.read();
         }
 
 		fn append_support_chain_tokens(ref self: ContractState, target_chain_id: felt252, token_address: ContractAddress){
