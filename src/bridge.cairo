@@ -1,4 +1,3 @@
-use web3mq_bridge_contract::bridge::IBridge;
 use starknet::ContractAddress;
 use starknet::ClassHash;
 
